@@ -139,3 +139,14 @@ Because SQLite serializes all writes at the WAL level, two concurrent transactio
 - **Index overkill:** AI suggested composite indexes on every foreign key. I had to evaluate which queries actually needed them and avoid adding indexes that would slow down writes without improving reads.
 
 **Bottom line:** AI accelerated implementation but required human judgment to stay grounded in the actual constraints of SQLite and avoid unnecessary architectural complexity.
+
+---
+
+## 6. What I Learnt
+
+- **Transactions are non-negotiable for inventory systems.** A simple `SELECT` + `UPDATE` without wrapping them in a transaction leaves a race condition window wide open. TypeORM's `QueryRunner` makes this straightforward but you have to remember to use it — the default `getRepository().save()` runs auto-committed.
+- **Partial indexes are underutilized.** Most tutorials only cover full indexes. A partial index on `WHERE status = 'PENDING'` stays small forever while a full index grows with every historical row. It's a free performance win for state-machine tables.
+- **SQLite serializes writes by default.** You don't need `SELECT ... FOR UPDATE` in SQLite — the whole database locks at the file level for writes. This simplifies the code but means you'd need a different strategy (row-level locking, advisory locks) if you migrated to Postgres or MySQL.
+- **Database constraints > application validation.** The `UNIQUE(ticketId)` constraint caught double-booking attempts that application logic alone could miss. Constraints are your last line of defense and should always be present.
+- **Migrations are living documentation.** Writing the `down()` migration for SQLite's `ALTER TABLE` limitations forced me to understand the actual SQL being generated, not just the ORM abstraction. The migration files tell the story of how the schema evolved.
+- **Testing with real data beats mocking.** Running the integration test against the actual SQLite database exposed issues that unit tests would have missed — like FK constraints blocking inserts and stock counters getting out of sync after cleanup.
