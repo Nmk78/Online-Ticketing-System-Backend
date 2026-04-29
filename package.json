@@ -1,0 +1,35 @@
+{
+  "name": "concert-ticketing-api",
+  "version": "1.0.0",
+  "description": "High-demand concert ticketing platform with ACID guarantees",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "migration:run": "ts-node src/scripts/migrate.ts",
+    "migration:revert": "ts-node src/scripts/revert.ts",
+    "seed": "ts-node src/seed.ts",
+    "test:rollback": "ts-node src/tests/rollbackProof.ts",
+    "test:all": "ts-node src/tests/fullIntegration.ts"
+  },
+  "keywords": ["ticketing", "concert", "typeorm", "sqlite", "express"],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1",
+    "node-cron": "^4.2.1",
+    "reflect-metadata": "^0.2.2",
+    "sqlite3": "^6.0.1",
+    "typeorm": "^0.3.28"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.6.0",
+    "@types/node-cron": "^3.0.11",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^6.0.3"
+  }
+}

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concert API - Route Tester</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; padding: 20px; }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { text-align: center; margin-bottom: 30px; color: #1a1a2e; }
+    .endpoint { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .endpoint-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+    .method { font-weight: bold; padding: 4px 10px; border-radius: 4px; color: white; font-size: 14px; }
+    .get { background: #61affe; }
+    .post { background: #49cc90; }
+    .path { font-family: monospace; font-size: 16px; color: #333; }
+    .description { color: #666; font-size: 14px; margin-bottom: 15px; }
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-weight: 500; margin-bottom: 5px; font-size: 14px; }
+    input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+    input:focus, select:focus { outline: none; border-color: #61affe; box-shadow: 0 0 0 2px rgba(97,175,254,0.2); }
+    button { background: #1a1a2e; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; }
+    button:hover { background: #16213e; }
+    .response { margin-top: 15px; background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 4px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto; display: none; }
+    .response.show { display: block; }
+    .status { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 12px; font-weight: bold; margin-bottom: 8px; }
+    .status-2xx { background: #49cc90; color: white; }
+    .status-4xx { background: #fca130; color: white; }
+    .status-5xx { background: #f93e3e; color: white; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎟️ Concert API - Route Tester</h1>
+
+    <!-- Health Check -->
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method get">GET</span>
+        <span class="path">/health</span>
+      </div>
+      <p class="description">Check API health status</p>
+      <button onclick="sendRequest('GET', '/health')">Send Request</button>
+      <div class="response" id="res-health"></div>
+    </div>
+
+    <!-- Get Concerts -->
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method get">GET</span>
+        <span class="path">/concerts</span>
+      </div>
+      <p class="description">List all concerts with available stock</p>
+      <button onclick="sendRequest('GET', '/concerts')">Send Request</button>
+      <div class="response" id="res-concerts"></div>
+    </div>
+
+    <!-- List Reservations -->
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method get">GET</span>
+        <span class="path">/reservations</span>
+      </div>
+      <p class="description">List all reservations with optional filters</p>
+      <div class="row">
+        <div class="form-group">
+          <label for="reservations-userId">User ID (optional)</label>
+          <input type="text" id="reservations-userId" placeholder="Filter by user">
+        </div>
+        <div class="form-group">
+          <label for="reservations-status">Status (optional)</label>
+          <select id="reservations-status">
+            <option value="">All</option>
+            <option value="PENDING">PENDING</option>
+            <option value="COMPLETED">COMPLETED</option>
+            <option value="EXPIRED">EXPIRED</option>
+            <option value="CANCELLED">CANCELLED</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="sendReservations()">Send Request</button>
+      <div class="response" id="res-reservations"></div>
+    </div>
+
+    <!-- Reserve Ticket -->
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method post">POST</span>
+        <span class="path">/reserve</span>
+      </div>
+      <p class="description">Reserve a ticket (5-minute hold)</p>
+      <div class="row">
+        <div class="form-group">
+          <label for="reserve-userId">User ID</label>
+          <input type="text" id="reserve-userId" placeholder="e.g., user123" value="user123">
+        </div>
+        <div class="form-group">
+          <label for="reserve-concertId">Concert ID</label>
+          <input type="number" id="reserve-concertId" placeholder="e.g., 1" value="1">
+        </div>
+      </div>
+      <button onclick="sendReserve()">Send Request</button>
+      <div class="response" id="res-reserve"></div>
+    </div>
+
+    <!-- Purchase Ticket -->
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method post">POST</span>
+        <span class="path">/purchase</span>
+      </div>
+      <p class="description">Confirm a reservation and complete purchase</p>
+      <div class="row">
+        <div class="form-group">
+          <label for="purchase-reservationId">Reservation ID</label>
+          <input type="number" id="purchase-reservationId" placeholder="e.g., 1">
+        </div>
+        <div class="form-group">
+          <label for="purchase-userId">User ID</label>
+          <input type="text" id="purchase-userId" placeholder="e.g., user123" value="user123">
+        </div>
+      </div>
+      <button onclick="sendPurchase()">Send Request</button>
+      <div class="response" id="res-purchase"></div>
+    </div>
+
+    <!-- Cleanup -->
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method post">POST</span>
+        <span class="path">/cleanup</span>
+      </div>
+      <p class="description">Manually trigger cleanup of expired reservations</p>
+      <button onclick="sendRequest('POST', '/cleanup')">Send Request</button>
+      <div class="response" id="res-cleanup"></div>
+    </div>
+  </div>
+
+  <script>
+    async function sendRequest(method, path, body = null) {
+      const responseEl = document.getElementById('res-' + path.slice(1));
+      responseEl.classList.add('show');
+      responseEl.textContent = 'Loading...';
+
+      try {
+        const options = { method, headers: { 'Content-Type': 'application/json' } };
+        if (body) options.body = JSON.stringify(body);
+
+        const res = await fetch(path, options);
+        const data = await res.json();
+        const statusClass = res.ok ? 'status-2xx' : res.status < 500 ? 'status-4xx' : 'status-5xx';
+
+        responseEl.innerHTML = `<span class="status ${statusClass}">${res.status} ${res.statusText}</span>\n${JSON.stringify(data, null, 2)}`;
+      } catch (err) {
+        responseEl.innerHTML = `<span class="status status-5xx">Error</span>\n${err.message}`;
+      }
+    }
+
+    async function sendReserve() {
+      const body = {
+        userId: document.getElementById('reserve-userId').value,
+        concertId: parseInt(document.getElementById('reserve-concertId').value)
+      };
+      await sendRequest('POST', '/reserve', body);
+    }
+
+    async function sendReservations() {
+      const userId = document.getElementById('reservations-userId').value;
+      const status = document.getElementById('reservations-status').value;
+      const params = new URLSearchParams();
+      if (userId) params.set('userId', userId);
+      if (status) params.set('status', status);
+      const url = '/reservations' + (params.toString() ? '?' + params.toString() : '');
+      await sendRequest('GET', url);
+    }
+
+    async function sendPurchase() {
+      const body = {
+        reservationId: parseInt(document.getElementById('purchase-reservationId').value),
+        userId: document.getElementById('purchase-userId').value
+      };
+      await sendRequest('POST', '/purchase', body);
+    }
+  </script>
+</body>
+</html>
