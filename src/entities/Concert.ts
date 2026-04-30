@@ -5,6 +5,7 @@ import {
   OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
+  VersionColumn,
 } from "typeorm";
 import { Ticket } from "./Ticket";
 
@@ -27,6 +28,9 @@ export class Concert {
 
   @Column({ type: "int", default: 0 })
   availableStock!: number;
+
+  @VersionColumn()
+  version!: number;
 
   @OneToMany(() => Ticket, (ticket) => ticket.concert)
   tickets!: Ticket[];

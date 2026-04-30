@@ -11,18 +11,35 @@
     "migration:revert": "ts-node src/scripts/revert.ts",
     "seed": "ts-node src/seed.ts",
     "test:rollback": "ts-node src/tests/rollbackProof.ts",
-    "test:all": "ts-node src/tests/fullIntegration.ts"
+    "test:all": "ts-node src/tests/fullIntegration.ts",
+    "test:stress": "ts-node src/scripts/stressTest.ts"
   },
-  "keywords": ["ticketing", "concert", "typeorm", "sqlite", "express"],
+  "keywords": [
+    "ticketing",
+    "concert",
+    "typeorm",
+    "sqlite",
+    "express"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@hono/node-server": "^2.0.0",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.4.1",
+    "ioredis": "^5.10.1",
     "node-cron": "^4.2.1",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
+    "rate-limit-redis": "^4.3.1",
     "reflect-metadata": "^0.2.2",
     "sqlite3": "^6.0.1",
-    "typeorm": "^0.3.28"
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "typeorm": "^0.3.28",
+    "uuid": "^14.0.0",
+    "zod": "^4.4.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",

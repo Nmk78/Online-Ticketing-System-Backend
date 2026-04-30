@@ -3,49 +3,103 @@ import express from "express";
 import path from "path";
 import { AppDataSource } from "./data-source";
 import { startCleanupCron } from "./cron/cleanupJob";
-import concertRoutes from "./routes/concerts";
-import reservationRoutes from "./routes/reservations";
+import { correlationIdMiddleware } from "./middleware/correlationId";
+import { globalErrorHandler } from "./middleware/globalErrorHandler";
+import { logger } from "./middleware/logger";
+import { initHardenedRoutes } from "./routes/hardenedReservations";
+import swaggerSpec from "./middleware/swagger";
+import swaggerUi from "swagger-ui-express";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ── Observability Middleware (first in chain) ─────────────────────────────────
+app.use(correlationIdMiddleware);
+app.use((req, _res, next) => {
+  logger.info(
+    {
+      method: req.method,
+      path: req.originalUrl,
+    },
+    "Request received"
+  );
+  next();
+});
+
+// ── Standard middleware ───────────────────────────────────────────────────────
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "..", "public")));
+
+// ── Swagger UI ────────────────────────────────────────────────────────────────
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// ── Routes ────────────────────────────────────────────────────────────────────
-app.use("/concerts", concertRoutes);
-app.use("/", reservationRoutes);
-
-// ── 404 handler ───────────────────────────────────────────────────────────────
-app.use((_req, res) => {
-  res.status(404).json({ success: false, message: "Route not found" });
-});
-
 // ── Start ─────────────────────────────────────────────────────────────────────
-AppDataSource.initialize()
-  .then(() => {
-    console.log("[DB] Database connected and migrations verified");
+let server: ReturnType<typeof app.listen>;
 
-    startCleanupCron();
+async function bootstrap() {
+  await AppDataSource.initialize();
+  logger.info("Database connected and migrations verified");
 
-    app.listen(PORT, () => {
-      console.log(`\n🎟️  Concert Ticketing API running on http://localhost:${PORT}`);
-      console.log(`   GET  /test-ui.html  — Route testing UI`);
-      console.log(`   GET  /health        — Health check`);
-      console.log(`   GET  /concerts      — List concerts & stock`);
-      console.log(`   POST /reserve       — Reserve a ticket (5 min hold)`);
-      console.log(`   POST /purchase      — Confirm a reservation`);
-      console.log(`   POST /cleanup       — Manual cleanup trigger\n`);
-    });
-  })
-  .catch((err) => {
-    console.error("[DB] Failed to initialize database:", err);
-    process.exit(1);
+  startCleanupCron();
+
+  // Routes MUST be registered before the global error handler
+  const hardenedRouter = await initHardenedRoutes();
+  app.use("/api/v2", hardenedRouter);
+
+  // Global error handler must be the VERY LAST middleware
+  app.use(globalErrorHandler);
+
+  server = app.listen(PORT, () => {
+    logger.info(`Concert Ticketing API running on http://localhost:${PORT}`);
+    logger.info(`  GET  /api-docs        — Swagger documentation`);
+    logger.info(`  GET  /api/v2/tickets  — List reservations (DTO serialized)`);
+    logger.info(`  POST /api/v2/reserve  — Reserve (optimistic locking)`);
+    logger.info(`  POST /api/v2/reserve/pessimistic — Reserve (pessimistic locking)`);
+    logger.info(`  POST /api/v2/reserve/atomic      — Reserve (atomic stock)`);
+    logger.info(`  POST /api/v2/purchase — Confirm purchase`);
   });
+}
+
+function gracefulShutdown(signal: string) {
+  logger.info(`${signal} received — starting graceful shutdown`);
+
+  if (server) {
+    server.close(async () => {
+      logger.info("HTTP server closed — no longer accepting requests");
+
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+
+      try {
+        await AppDataSource.destroy();
+        logger.info("Database connection pool drained");
+      } catch (err) {
+        logger.error({ err }, "Error during database shutdown");
+      }
+
+      logger.info("Graceful shutdown complete");
+      process.exit(0);
+    });
+
+    setTimeout(() => {
+      logger.error("Graceful shutdown timed out — forcing exit");
+      process.exit(1);
+    }, 10000);
+  } else {
+    process.exit(0);
+  }
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
+bootstrap().catch((err) => {
+  logger.error({ err }, "Failed to initialize application");
+  process.exit(1);
+});
 
 export default app;
