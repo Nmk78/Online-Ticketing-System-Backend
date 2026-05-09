@@ -17,6 +17,7 @@ async function getStore() {
       retryStrategy: () => null,
     });
 
+    redis.on("error", () => {});
     await redis.connect();
 
     const redisStore = new RedisStoreCtor({
