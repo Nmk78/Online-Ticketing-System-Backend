@@ -3,3 +3,5 @@ dist/
 database.sqlite
 .env
 *.log
+*.pub
+*.pem

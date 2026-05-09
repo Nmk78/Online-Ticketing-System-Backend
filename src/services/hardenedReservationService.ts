@@ -3,6 +3,7 @@ import { Concert } from "../entities/Concert";
 import { Ticket } from "../entities/Ticket";
 import { Reservation } from "../entities/Reservation";
 import {
+  ConcurrencyError,
   ConflictError,
   NotFoundError,
 } from "../middleware/errors";
@@ -85,7 +86,7 @@ export const reserveTicketOptimistic = async (
         );
       }
 
-      throw new ConflictError(
+      throw new ConcurrencyError(
         "Concert data was modified by another request. Please try again."
       );
     }
@@ -145,7 +146,7 @@ export const reserveTicketOptimistic = async (
     await queryRunner.rollbackTransaction();
 
     if (err instanceof OptimisticLockVersionMismatchError) {
-      throw new ConflictError(
+      throw new ConcurrencyError(
         "Concert data was modified by another request. Please try again."
       );
     }

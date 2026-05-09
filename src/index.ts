@@ -9,12 +9,21 @@ import { logger } from "./middleware/logger";
 import { initHardenedRoutes } from "./routes/hardenedReservations";
 import swaggerSpec from "./middleware/swagger";
 import swaggerUi from "swagger-ui-express";
+import {
+  initSentry,
+  sentryRequestHandler,
+  setupSentryExpressErrorHandler,
+} from "./observability/sentry";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const API_PREFIXES = ["/api/v1", "/api/v2"] as const;
+
+initSentry();
 
 // ── Observability Middleware (first in chain) ─────────────────────────────────
 app.use(correlationIdMiddleware);
+app.use(sentryRequestHandler());
 app.use((req, _res, next) => {
   logger.info(
     {
@@ -31,7 +40,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "..", "public")));
 
 // ── Swagger UI ────────────────────────────────────────────────────────────────
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get("/health", (_req, res) => {
@@ -49,15 +58,20 @@ async function bootstrap() {
 
   // Routes MUST be registered before the global error handler
   const hardenedRouter = await initHardenedRoutes();
-  app.use("/api/v2", hardenedRouter);
+  for (const apiPrefix of API_PREFIXES) {
+    app.use(apiPrefix, hardenedRouter);
+  }
 
   // Global error handler must be the VERY LAST middleware
+  setupSentryExpressErrorHandler(app);
   app.use(globalErrorHandler);
 
   server = app.listen(PORT, () => {
     logger.info(`Concert Ticketing API running on http://localhost:${PORT}`);
-    logger.info(`  GET  /api-docs        — Swagger documentation`);
+    logger.info(`  GET  /docs            — Swagger documentation`);
+    logger.info(`  GET  /api/v1/tickets  — List reservations (DTO serialized)`);
     logger.info(`  GET  /api/v2/tickets  — List reservations (DTO serialized)`);
+    logger.info(`  POST /api/v1/reserve  — Reserve (optimistic locking)`);
     logger.info(`  POST /api/v2/reserve  — Reserve (optimistic locking)`);
     logger.info(`  POST /api/v2/reserve/pessimistic — Reserve (pessimistic locking)`);
     logger.info(`  POST /api/v2/reserve/atomic      — Reserve (atomic stock)`);

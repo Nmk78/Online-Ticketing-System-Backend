@@ -34,7 +34,7 @@ export async function initHardenedRoutes() {
 
 /**
  * @swagger
- * /api/v2/tickets:
+ * /api/v1/tickets:
  *   get:
  *     summary: List all reservations
  *     tags: [Tickets]
@@ -84,7 +84,7 @@ router.get("/tickets", async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /api/v2/reserve:
+ * /api/v1/reserve:
  *   post:
  *     summary: Reserve tickets (Optimistic Locking)
  *     tags: [Reservations]
@@ -158,7 +158,7 @@ router.post(
 
 /**
  * @swagger
- * /api/v2/reserve/pessimistic:
+ * /api/v1/reserve/pessimistic:
  *   post:
  *     summary: Reserve tickets (Pessimistic Locking)
  *     tags: [Reservations]
@@ -228,7 +228,7 @@ router.post(
 
 /**
  * @swagger
- * /api/v2/reserve/atomic:
+ * /api/v1/reserve/atomic:
  *   post:
  *     summary: Reserve tickets (Atomic Stock Decrease)
  *     description: Uses a single UPDATE ... WHERE stock > 0 statement instead of read-modify-write
@@ -348,7 +348,7 @@ const purchaseHandler = async (
 
 /**
  * @swagger
- * /api/v2/tickets:
+ * /api/v1/tickets:
  *   post:
  *     summary: Confirm a reservation purchase
  *     tags: [Reservations]
@@ -387,7 +387,7 @@ router.post("/tickets", validate(purchaseSchema), purchaseHandler);
 
 /**
  * @swagger
- * /api/v2/purchase:
+ * /api/v1/purchase:
  *   post:
  *     summary: Confirm a reservation purchase
  *     tags: [Reservations]
@@ -426,7 +426,7 @@ router.post(
 
 /**
  * @swagger
- * /api/v2/concerts:
+ * /api/v1/concerts:
  *   get:
  *     summary: List all concerts
  *     tags: [Concerts]

@@ -1,0 +1,50 @@
+name: Release Deploy
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run integration test suite
+        run: npm run test:all
+
+      - name: Configure SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync repository to EC2
+        run: |
+          rsync -az --delete \
+            --exclude '.git' \
+            --exclude 'node_modules' \
+            --exclude '.env' \
+            ./ "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ secrets.EC2_APP_DIR }}/"
+
+      - name: Deploy on EC2
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          ssh "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" \
+            "cd '${{ secrets.EC2_APP_DIR }}' && RELEASE_TAG='${RELEASE_TAG}' bash deploy/deploy-api.sh"

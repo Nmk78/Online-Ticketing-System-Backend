@@ -38,6 +38,13 @@ export class ConflictError extends AppError {
   }
 }
 
+export class ConcurrencyError extends AppError {
+  constructor(message: string) {
+    super(message, 409, "CONCURRENCY_ERROR");
+    this.name = "ConcurrencyError";
+  }
+}
+
 export class RateLimitError extends AppError {
   constructor() {
     super("Too many requests, please try again later", 429, "RATE_LIMITED");

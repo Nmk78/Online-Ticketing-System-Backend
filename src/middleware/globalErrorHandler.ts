@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import { AppError, ValidationError } from "./errors";
+import { AppError, ConcurrencyError, ValidationError } from "./errors";
 import { logger } from "./logger";
 import { getCorrelationId } from "./asyncLocalStore";
+import { Sentry } from "../observability/sentry";
 
 export const globalErrorHandler = (
   err: Error,
@@ -12,6 +13,21 @@ export const globalErrorHandler = (
   const correlationId = getCorrelationId();
 
   if (err instanceof AppError) {
+    if (err instanceof ConcurrencyError) {
+      Sentry.withScope((scope) => {
+        scope.setTag("error_type", "ConcurrencyError");
+        scope.setTag("error_code", err.errorCode);
+        scope.setTag("endpoint", _req.path);
+        scope.setLevel("warning");
+        scope.setContext("request", {
+          method: _req.method,
+          path: _req.path,
+          body: _req.body as Record<string, unknown>,
+        });
+        Sentry.captureException(err);
+      });
+    }
+
     logger.warn(
       {
         error_code: err.errorCode,
