@@ -34,11 +34,24 @@ async function main() {
   console.log("═══════════════════════════════════════════════");
 
   await AppDataSource.initialize();
+  await AppDataSource.runMigrations();
 
-  // ── Reset: clean all reservations, reset tickets & stock ──
   const reservationRepo = AppDataSource.getRepository(Reservation);
   const ticketRepo = AppDataSource.getRepository(Ticket);
   const concertRepo = AppDataSource.getRepository(Concert);
+
+  // ── Seed concerts if the database is empty ──────────────────────────────
+  const existingCount = await concertRepo.count();
+  if (existingCount === 0) {
+    await concertRepo.save([
+      { name: "Midnight Echoes World Tour", venue: "Madison Square Garden", date: new Date("2025-08-15T20:00:00Z"), totalStock: 5, availableStock: 5 },
+      { name: "Neon Pulse Electronic Festival", venue: "The O2 Arena, London", date: new Date("2025-09-20T18:00:00Z"), totalStock: 3, availableStock: 3 },
+      { name: "Acoustic Horizons Unplugged", venue: "Sydney Opera House", date: new Date("2025-10-05T19:30:00Z"), totalStock: 4, availableStock: 4 },
+    ]);
+    console.log("[SEED] Seeded 3 concerts\n");
+  }
+
+  // ── Reset: clean all reservations, reset tickets & stock ──
 
   await reservationRepo.clear();
   await ticketRepo.clear();
