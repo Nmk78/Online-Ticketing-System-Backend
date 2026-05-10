@@ -2,6 +2,11 @@
 
 A Node.js/Express concert ticket reservation system with ACID transaction guarantees, SQLite + TypeORM, and scheduled cleanup of expired holds.
 
+## Production Launch
+
+For final deployment + submission (EC2, CI/CD, self-hosted Sentry, HTTPS, and required links), follow:
+- `deploy/FINAL_PRODUCTION_LAUNCH.md`
+
 ## Quick Start
 
 ```bash

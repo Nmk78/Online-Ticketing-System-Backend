@@ -14,7 +14,15 @@
       "Bash(git commit -m 'Suppress unhandled ioredis error event when Redis is unavailable *)",
       "Bash(dir C:\\\\Programming\\\\Backend /b /a)",
       "Bash(findstr /v node_modules)",
-      "PowerShell(Get-ChildItem \"C:\\\\Programming\\\\Backend\" | Where-Object { $_.Name -ne \"node_modules\" } | Select-Object Name, PSIsContainer)"
+      "PowerShell(Get-ChildItem \"C:\\\\Programming\\\\Backend\" | Where-Object { $_.Name -ne \"node_modules\" } | Select-Object Name, PSIsContainer)",
+      "Bash(npm install *)",
+      "Bash(gh workflow *)",
+      "PowerShell(gh workflow *)",
+      "PowerShell(git *)",
+      "PowerShell(npm install *)",
+      "PowerShell(head *)",
+      "PowerShell(Remove-Item *)",
+      "PowerShell(npm info *)"
     ]
   }
 }
