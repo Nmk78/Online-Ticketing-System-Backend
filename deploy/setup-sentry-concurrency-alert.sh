@@ -19,23 +19,23 @@ curl --fail --silent --show-error \
   "filterMatch": "all",
   "filters": [
     {
-      "id": "error_code",
-      "name": "Error code",
+      "id": "sentry.rules.filters.TaggedEventFilter",
+      "key": "error_code",
+      "match": "eq",
       "value": "CONCURRENCY_ERROR"
     },
     {
-      "id": "message",
-      "name": "Message",
-      "match": "contains",
+      "id": "sentry.rules.filters.EventAttributeFilter",
+      "attribute": "message",
+      "match": "co",
       "value": "Concert data was modified by another request"
     }
   ],
   "actions": [
     {
-      "id": "notify_email",
-      "targetType": "Team",
-      "targetIdentifier": "",
-      "targetDisplay": "${ALERT_EMAIL}"
+      "id": "sentry.mail.actions.NotifyEmailAction",
+      "targetType": "IssueOwners",
+      "targetIdentifier": ""
     }
   ]
 }

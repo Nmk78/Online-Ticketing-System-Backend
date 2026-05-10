@@ -7,13 +7,12 @@ RELEASE_TAG="${RELEASE_TAG:-unknown}"
 mkdir -p "${APP_DIR}"
 cd "${APP_DIR}"
 
-if [[ ! -d .git ]]; then
-  echo "Repository is not initialized in ${APP_DIR}."
-  exit 1
+if [[ -d .git ]]; then
+  # Manual / initial-deploy path: repo was cloned, check out the tag
+  git fetch --all --tags --prune
+  git checkout "${RELEASE_TAG}"
 fi
-
-git fetch --all --tags --prune
-git checkout "${RELEASE_TAG}"
+# CI path: code is already rsynced at the correct version — skip git steps
 
 if [[ ! -f .env ]]; then
   echo ".env is required at ${APP_DIR}/.env before deploy."

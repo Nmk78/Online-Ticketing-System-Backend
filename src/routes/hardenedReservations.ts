@@ -18,6 +18,7 @@ import {
 import { ConflictError, NotFoundError } from "../middleware/errors";
 import { createReserveRateLimiter } from "../middleware/rateLimiter";
 import { httpLogger } from "../middleware/logger";
+import { Sentry } from "../observability/sentry";
 
 const router = Router();
 
@@ -450,6 +451,21 @@ router.get("/concerts", async (req: Request, res: Response) => {
   const concerts = await repo.find({ order: { date: "ASC" } });
   const serialized = serializeList(concerts, serializeConcert);
   res.json({ success: true, data: serialized });
+});
+
+/**
+ * @swagger
+ * /api/v1/debug/test-sentry:
+ *   get:
+ *     summary: Send a test event to Sentry to verify the integration
+ *     tags: [Debug]
+ *     responses:
+ *       200:
+ *         description: Test event dispatched
+ */
+router.get("/debug/test-sentry", (_req, res) => {
+  Sentry.captureMessage("Production Sentry test — manual trigger", "error");
+  res.json({ success: true, message: "Test event sent to Sentry" });
 });
 
 export default router;

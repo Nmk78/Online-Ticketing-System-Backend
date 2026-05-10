@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Test-NetConnection *)",
+      "PowerShell(Test-NetConnection *)",
+      "PowerShell(ssh -i \"C:\\\\Programming\\\\Backend\\\\deploy\\\\AWS_key.pem\" -o StrictHostKeyChecking=no -o ConnectTimeout=15 ubuntu@13.51.173.81 \"echo connected && lsb_release -d && \\(docker --version 2>/dev/null || echo docker-not-installed\\) && ls /opt/ 2>/dev/null\")",
+      "PowerShell(ssh -i \"C:\\\\Programming\\\\Backend\\\\deploy\\\\AWS_key.pem\" -o StrictHostKeyChecking=no -o ConnectTimeout=20 -o ServerAliveInterval=5 ubuntu@13.51.173.81 \"echo connected && lsb_release -d && \\(docker --version 2>/dev/null || echo docker-not-installed\\) && ls /opt/ 2>/dev/null\")",
+      "PowerShell(ssh -vvv -i \"C:\\\\Programming\\\\Backend\\\\deploy\\\\AWS_key.pem\" -o StrictHostKeyChecking=no -o ConnectTimeout=20 ubuntu@13.51.173.81 \"echo ok\" 2>&1 | Select-Object -First 40)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "PowerShell(ssh-keygen *)",
+      "Bash(git commit -m 'Fix npm ci peer dependency conflict in Dockerfile *)",
+      "Bash(git commit -m 'Suppress unhandled ioredis error event when Redis is unavailable *)",
+      "Bash(dir C:\\\\Programming\\\\Backend /b /a)",
+      "Bash(findstr /v node_modules)",
+      "PowerShell(Get-ChildItem \"C:\\\\Programming\\\\Backend\" | Where-Object { $_.Name -ne \"node_modules\" } | Select-Object Name, PSIsContainer)"
+    ]
+  }
+}
